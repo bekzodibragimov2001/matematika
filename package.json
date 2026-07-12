@@ -1,0 +1,17 @@
+{
+  "name": "math-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Matematika test platformasi — ro'yxatdan o'tish, admin tasdig'i, test ishlash va statistika tizimi. Vercel bepul tarifida ishlaydi.",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
