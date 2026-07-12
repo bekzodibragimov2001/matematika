@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathDash — Kirish</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+<style>
+    body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    .auth-wrapper { width: 100%; max-width: 420px; }
+    .logo {
+        font-size: 1.7rem; font-weight: 700; color: var(--primary);
+        margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; justify-content: center;
+    }
+    .logo span { color: var(--accent); }
+    .auth-card { padding: 2.2rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.6rem; background: #F1F5F9; padding: 4px; border-radius: var(--radius-sm); }
+    .tab-btn {
+        flex: 1; text-align: center; padding: 0.6rem; border-radius: 8px; cursor: pointer;
+        font-weight: 500; color: var(--text-muted); font-size: 0.9rem; transition: 0.2s;
+    }
+    .tab-btn.active { background: #fff; color: var(--primary); box-shadow: var(--shadow-sm); }
+    .field { margin-bottom: 1.1rem; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .switch-note { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.2rem; }
+    .switch-note a { color: var(--primary); font-weight: 600; cursor: pointer; }
+    .status-notice {
+        background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E;
+        padding: 1rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.9rem; margin-bottom: 1.2rem; line-height: 1.5;
+    }
+    .status-notice.blocked { background: #FEF2F2; border-color: #FECACA; color: #B91C1C; }
+    .admin-link {
+        text-align: center; margin-top: 1.5rem; font-size: 0.82rem; color: var(--text-muted); cursor: pointer;
+    }
+    .admin-link:hover { color: var(--primary); }
+    #btn-submit-icon { display: none; }
+</style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+    <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg>
+        Math<span>Dash</span>
+    </div>
+
+    <div class="card auth-card">
+
+        <div id="view-normal">
+            <div class="tabs">
+                <div class="tab-btn active" data-tab="login">Kirish</div>
+                <div class="tab-btn" data-tab="register">Ro'yxatdan o'tish</div>
+            </div>
+
+            <div id="panel-login" class="panel active">
+                <div id="login-notice"></div>
+                <div class="field">
+                    <label class="form-label">Login</label>
+                    <input id="login-username" type="text" placeholder="login" autocomplete="username">
+                </div>
+                <div class="field">
+                    <label class="form-label">Parol</label>
+                    <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <button class="btn btn-primary" style="width:100%" onclick="handleLogin()">
+                    <span id="login-btn-text">Kirish</span>
+                </button>
+            </div>
+
+            <div id="panel-register" class="panel">
+                <div class="field">
+                    <label class="form-label">To'liq ism</label>
+                    <input id="reg-fullname" type="text" placeholder="Ism Familiya">
+                </div>
+                <div class="field">
+                    <label class="form-label">Login</label>
+                    <input id="reg-username" type="text" placeholder="login">
+                </div>
+                <div class="field">
+                    <label class="form-label">Email (ixtiyoriy)</label>
+                    <input id="reg-email" type="email" placeholder="email@example.com">
+                </div>
+                <div class="field">
+                    <label class="form-label">Parol</label>
+                    <input id="reg-password" type="password" placeholder="kamida 6 belgi">
+                </div>
+                <button class="btn btn-accent" style="width:100%" onclick="handleRegister()">
+                    <span id="reg-btn-text">Ro'yxatdan o'tish</span>
+                </button>
+            </div>
+
+            <div class="admin-link" onclick="toggleAdmin(true)">Administrator sifatida kirish</div>
+        </div>
+
+        <div id="view-admin" style="display:none;">
+            <div class="tabs" style="margin-bottom: 1.6rem;">
+                <div class="tab-btn active" style="flex:none; padding: 0.6rem 1.2rem;">Administrator</div>
+            </div>
+            <div class="field">
+                <label class="form-label">Admin login</label>
+                <input id="admin-username" type="text" placeholder="mathadmin">
+            </div>
+            <div class="field">
+                <label class="form-label">Admin parol</label>
+                <input id="admin-password" type="password" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="handleAdminLogin()">Admin sifatida kirish</button>
+            <div class="switch-note"><a onclick="toggleAdmin(false)">← Foydalanuvchi sifatida kirish</a></div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+            document.getElementById('login-notice').innerHTML = '';
+        });
+    });
+
+    function toggleAdmin(show) {
+        document.getElementById('view-normal').style.display = show ? 'none' : 'block';
+        document.getElementById('view-admin').style.display = show ? 'block' : 'none';
+    }
+
+    async function handleLogin() {
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        const notice = document.getElementById('login-notice');
+        notice.innerHTML = '';
+        if (!username || !password) { showToast("Login va parolni kiriting", "error"); return; }
+
+        try {
+            const data = await api('/api/auth/login', { method: 'POST', body: { username, password } });
+            setToken(data.token);
+            setUser(data.user);
+            window.location.href = '/dashboard.html';
+        } catch (e) {
+            if (e.data && e.data.error === 'PENDING') {
+                notice.innerHTML = `<div class="status-notice">⏳ ${e.data.message}</div>`;
+            } else if (e.data && e.data.error === 'BLOCKED') {
+                notice.innerHTML = `
+                    <div class="status-notice blocked">
+                        🚫 ${e.data.message}
+                        <div style="margin-top:0.8rem;">
+                            <button class="btn btn-danger" style="width:100%" onclick="requestUnblock(${e.data.userId})">Qayta faollashtirishni so'rash</button>
+                        </div>
+                    </div>`;
+            } else {
+                showToast(e.message, 'error');
+            }
+        }
+    }
+
+    async function requestUnblock(userId) {
+        try {
+            const data = await api('/api/auth/request-access', { method: 'POST', body: { userId } });
+            showToast(data.message, 'success');
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    }
+
+    async function handleRegister() {
+        const fullName = document.getElementById('reg-fullname').value.trim();
+        const username = document.getElementById('reg-username').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+
+        if (!fullName || !username || !password) { showToast("Barcha majburiy maydonlarni to'ldiring", "error"); return; }
+
+        try {
+            const data = await api('/api/auth/register', { method: 'POST', body: { fullName, username, email, password } });
+            showToast(data.message, 'success');
+            document.querySelector('.tab-btn[data-tab="login"]').click();
+            document.getElementById('login-notice').innerHTML =
+                `<div class="status-notice">⏳ Ro'yxatdan o'tdingiz. Administrator tasdig'ini kuting.</div>`;
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    }
+
+    async function handleAdminLogin() {
+        const username = document.getElementById('admin-username').value.trim();
+        const password = document.getElementById('admin-password').value;
+        try {
+            const data = await api('/api/auth/admin-login', { method: 'POST', body: { username, password } });
+            setAdminToken(data.token);
+            window.location.href = '/admin.html';
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    }
+
+    // Agar allaqachon tizimga kirgan bo'lsa, to'g'ridan-to'g'ri dashboardga yo'naltirish
+    if (getToken()) window.location.href = '/dashboard.html';
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathDash — Bosh sahifa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+<style>
+    body { display: flex; min-height: 100vh; overflow-x: hidden; }
+
+    .sidebar {
+        width: 260px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color);
+        padding: 2rem 1.5rem; display: flex; flex-direction: column; position: fixed; height: 100vh;
+        z-index: 100; transition: all 0.3s ease;
+    }
+    .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 3rem; display: flex; align-items: center; gap: 10px; }
+    .logo span { color: var(--accent-green); }
+    .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .nav-item { padding: 0.8rem 1rem; border-radius: 8px; color: var(--text-muted); font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 12px; }
+    .nav-item:hover, .nav-item.active { background-color: #E0F2FE; color: var(--primary-blue); }
+
+    .main-content { margin-left: 260px; flex: 1; padding: 2rem 3rem; display: flex; flex-direction: column; gap: 2rem; width: calc(100% - 260px); }
+
+    .header { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 1.5rem 2.5rem; border-radius: 20px; box-shadow: var(--shadow-sm); }
+    .welcome-text h1 { font-size: 1.5rem; font-weight: 600; }
+    .welcome-text p { color: var(--text-muted); font-size: 0.95rem; }
+    .user-widget { display: flex; align-items: center; gap: 2rem; }
+    .score-display { text-align: right; }
+    .score-display h3 { font-size: 1.8rem; color: var(--accent-green); font-weight: 700; }
+    .score-display p { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    .avatar-container { position: relative; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; }
+    .avatar { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-blue), #38BDF8); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: 600; font-size: 1.2rem; z-index: 2; box-shadow: 0 0 15px rgba(14, 165, 233, 0.4); }
+    .orbit { position: absolute; width: 100%; height: 100%; animation: spin 10s linear infinite; }
+    .orbit-item { position: absolute; font-weight: 700; color: var(--primary-blue); font-size: 1rem; animation: counter-spin 10s linear infinite; }
+    .orbit-item:nth-child(1) { top: -5px; left: 35px; }
+    .orbit-item:nth-child(2) { bottom: -5px; left: 35px; }
+    .orbit-item:nth-child(3) { left: -5px; top: 35px; }
+    .orbit-item:nth-child(4) { right: -5px; top: 35px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes counter-spin { 100% { transform: rotate(-360deg); } }
+
+    .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+    .module-card { background: var(--bg-card); border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-md); transition: all 0.3s ease; border: 1px solid transparent; display: flex; flex-direction: column; gap: 1.5rem; }
+    .module-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); border-color: #E0F2FE; }
+    .module-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--border-color); padding-bottom: 1rem; }
+    .module-header h2 { font-size: 1.2rem; color: var(--text-dark); font-weight: 600; }
+    .module-icon { width: 40px; height: 40px; background: #E0F2FE; color: var(--primary-blue); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+
+    .test-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+    .test-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-radius: 12px; background: #F8FAFC; }
+    .test-item h4 { font-size: 0.95rem; }
+    .test-item p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .btn-start { background: var(--primary-blue); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+    .btn-start:hover { background: var(--primary-blue-hover); }
+
+    .bar-group { margin-bottom: 1rem; }
+    .bar-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 500; }
+    .bar-bg { height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; }
+    .bar-fill.red { background: var(--danger); }
+    .bar-fill.yellow { background: var(--warning); }
+    .bar-fill.green { background: var(--accent); }
+
+    .ranking-content { display: flex; align-items: center; gap: 1.5rem; }
+    .rank-circle { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-blue), var(--accent-green)); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+    .rank-circle .num { font-size: 1.8rem; font-weight: 700; text-align: center; }
+    .rank-circle .lbl { font-size: 0.7rem; text-align: center; text-transform: uppercase; }
+    .rank-stats { display: flex; flex-direction: column; gap: 0.6rem; }
+    .stat-badge { background: #F0FDF4; color: var(--accent-green); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; width: fit-content; }
+
+    .formula-container { background: #F8FAFC; padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--primary-blue); font-size: 1.3rem; text-align: center; }
+    .formula-title { font-size: 0.85rem; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-weight: 600; }
+
+    .recent-results { background: var(--bg-card); border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-md); }
+    .recent-results h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; text-transform: uppercase; }
+    td { font-weight: 500; font-size: 0.95rem; }
+
+    @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+        .sidebar { transform: translateX(-100%); }
+        .main-content { margin-left: 0; width: 100%; padding: 1rem; }
+        .header { flex-direction: column; gap: 1.5rem; text-align: center; }
+        .user-widget { flex-direction: column; }
+        .score-display { text-align: center; }
+    }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg>
+        Math<span>Dash</span>
+    </div>
+    <ul class="nav-menu">
+        <li class="nav-item active"><span>🏠</span> Dashboard</li>
+        <li class="nav-item" onclick="window.location.href='/results.html'"><span>📊</span> Natijalarim</li>
+        <li class="nav-item" onclick="handleLogout()" style="margin-top: auto;"><span>🚪</span> Chiqish</li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <header class="header">
+        <div class="welcome-text">
+            <h1 id="welcome-title">Xush kelibsiz!</h1>
+            <p>Bugun matematika ko'nikmalaringizni oshirish uchun ajoyib kun.</p>
+        </div>
+        <div class="user-widget">
+            <div class="score-display">
+                <p>Umumiy Ball</p>
+                <h3 id="total-score">0</h3>
+            </div>
+            <div class="avatar-container">
+                <div class="orbit">
+                    <span class="orbit-item">π</span><span class="orbit-item">∞</span>
+                    <span class="orbit-item">∑</span><span class="orbit-item">∫</span>
+                </div>
+                <div class="avatar" id="avatar-initials">--</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <div class="module-card">
+            <div class="module-header"><h2>Bugungi testlar</h2><div class="module-icon">📝</div></div>
+            <ul class="test-list" id="test-list"><li class="empty-state">Yuklanmoqda...</li></ul>
+        </div>
+
+        <div class="module-card">
+            <div class="module-header"><h2>Zaif mavzular tahlili</h2><div class="module-icon">📉</div></div>
+            <div class="chart-container" id="weak-topics">
+                <p class="empty-state">Hali ma'lumot yo'q — test ishlab ko'ring.</p>
+            </div>
+        </div>
+
+        <div class="module-card">
+            <div class="module-header"><h2>Sizning Reytingingiz</h2><div class="module-icon">🌟</div></div>
+            <div class="ranking-content" id="rank-content">
+                <p class="empty-state">Ma'lumot yuklanmoqda...</p>
+            </div>
+        </div>
+
+        <div class="module-card">
+            <div class="module-header"><h2>Kun Formulasi</h2><div class="module-icon">📐</div></div>
+            <div class="formula-container">
+                <div class="formula-title">Kvadrat tenglama yechimi</div>
+                \[ x_{1,2} = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]
+            </div>
+        </div>
+    </div>
+
+    <div class="recent-results">
+        <h2>So'nggi natijalar</h2>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Sana</th><th>Test Nomi</th><th>Natija</th><th>Holat</th></tr></thead>
+                <tbody id="results-body">
+                    <tr><td colspan="4" class="empty-state">Yuklanmoqda...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    if (!getToken()) window.location.href = '/index.html';
+
+    function handleLogout() { clearAuth(); window.location.href = '/index.html'; }
+
+    function initials(name) {
+        return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '--';
+    }
+
+    function statusBadge(pct) {
+        if (pct >= 80) return `<span class="status-badge high">A'lo</span>`;
+        if (pct >= 50) return `<span class="status-badge medium">O'rtacha</span>`;
+        return `<span class="status-badge low">Zaif</span>`;
+    }
+
+    async function loadDashboard() {
+        try {
+            const data = await api('/api/user/dashboard');
+
+            document.getElementById('welcome-title').innerText = `Xush kelibsiz, ${data.user.fullName}!`;
+            document.getElementById('total-score').innerText = data.user.totalScore.toLocaleString();
+            document.getElementById('avatar-initials').innerText = initials(data.user.fullName);
+
+            const testList = document.getElementById('test-list');
+            if (data.availableTests.length === 0) {
+                testList.innerHTML = `<li class="empty-state">Hozircha faol testlar yo'q</li>`;
+            } else {
+                testList.innerHTML = data.availableTests.map(t => `
+                    <li class="test-item">
+                        <div class="test-info">
+                            <h4>${t.title}</h4>
+                            <p>${t.question_count} savol • ${t.time_limit_minutes} daqiqa</p>
+                        </div>
+                        <button class="btn-start" onclick="window.location.href='/test.html?testId=${t.id}'">Boshlash</button>
+                    </li>
+                `).join('');
+            }
+
+            const weakBox = document.getElementById('weak-topics');
+            if (data.weakTopics.length === 0) {
+                weakBox.innerHTML = `<p class="empty-state">Hali ma'lumot yo'q — test ishlab ko'ring.</p>`;
+            } else {
+                weakBox.innerHTML = data.weakTopics.map(w => {
+                    const pct = Math.round((w.correct / w.total) * 100);
+                    const cls = pct < 50 ? 'red' : (pct < 80 ? 'yellow' : 'green');
+                    return `
+                    <div class="bar-group">
+                        <div class="bar-label"><span>${w.topic}</span><span style="color:var(--${cls === 'red' ? 'danger' : cls === 'yellow' ? 'warning' : 'accent'})">${pct}% O'zlashtirish</span></div>
+                        <div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+                    </div>`;
+                }).join('') + `<p style="font-size:0.85rem;color:var(--text-muted);margin-top:10px;">Tavsiya: Yuqoridagi mavzular bo'yicha takroriy mashqlar bajaring.</p>`;
+            }
+
+            const rankBox = document.getElementById('rank-content');
+            if (data.rank) {
+                rankBox.innerHTML = `
+                    <div class="rank-circle"><div><div class="num">${data.rank.rnk}</div><div class="lbl">O'rin</div></div></div>
+                    <div class="rank-stats">
+                        <div class="stat-badge">👥 Jami ${data.rank.total_users} faol o'quvchi orasida</div>
+                    </div>`;
+            } else {
+                rankBox.innerHTML = `<p class="empty-state">Reyting uchun kamida bitta test yakunlang.</p>`;
+            }
+
+            const resultsBody = document.getElementById('results-body');
+            if (data.recentResults.length === 0) {
+                resultsBody.innerHTML = `<tr><td colspan="4" class="empty-state">Hali natija yo'q</td></tr>`;
+            } else {
+                resultsBody.innerHTML = data.recentResults.map(r => {
+                    const pct = r.total_questions > 0 ? Math.round((r.score / (r.total_questions * 5)) * 100) : 0;
+                    const date = new Date(r.finished_at).toLocaleDateString('uz-UZ', { day: '2-digit', month: 'long', year: 'numeric' });
+                    return `<tr><td>${date}</td><td>${r.test_title}</td><td>${r.score} / ${r.total_questions * 5}</td><td>${statusBadge(pct)}</td></tr>`;
+                }).join('');
+            }
+
+            if (window.MathJax) MathJax.typesetPromise();
+        } catch (e) {
+            showToast(e.message, 'error');
+            if (e.status === 401) { clearAuth(); window.location.href = '/index.html'; }
+        }
+    }
+
+    loadDashboard();
+</script>
+</body>
+</html>

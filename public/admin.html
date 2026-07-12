@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathDash — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+<style>
+    body { display: flex; min-height: 100vh; }
+    .sidebar { width: 250px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 2rem 1.5rem; display: flex; flex-direction: column; position: fixed; height: 100vh; }
+    .logo { font-size: 1.4rem; font-weight: 700; color: var(--primary); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 8px; }
+    .logo span { color: var(--accent); }
+    .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-muted); font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.92rem; }
+    .nav-item:hover, .nav-item.active { background: #E0F2FE; color: var(--primary); }
+    .badge-count { margin-left: auto; background: var(--danger); color: #fff; font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; font-weight: 700; display: none; }
+
+    .main { margin-left: 250px; flex: 1; padding: 2rem 2.5rem; width: calc(100% - 250px); }
+    .page { display: none; }
+    .page.active { display: block; }
+    h1 { font-size: 1.4rem; margin-bottom: 1.5rem; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem; }
+    .stat-box { background: var(--bg-card); border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+    .stat-box h4 { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .stat-box p { font-size: 1.6rem; font-weight: 700; color: var(--primary); margin-top: 6px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    th { color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; }
+    tr:hover td { background: #F8FAFC; }
+    .row-actions { display: flex; gap: 0.5rem; }
+    .row-actions .btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: none; align-items: center; justify-content: center; z-index: 500; padding: 1.5rem; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #fff; border-radius: 18px; max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 2rem; }
+    .modal-close { float: right; cursor: pointer; font-size: 1.3rem; color: var(--text-muted); }
+
+    .field { margin-bottom: 1rem; }
+    .inline-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg>
+        Math<span>Admin</span>
+    </div>
+    <ul class="nav-menu">
+        <li class="nav-item active" data-page="page-stats"><span>📊</span> Statistika</li>
+        <li class="nav-item" data-page="page-requests"><span>📥</span> So'rovlar <span class="badge-count" id="req-badge">0</span></li>
+        <li class="nav-item" data-page="page-users"><span>👥</span> Foydalanuvchilar</li>
+        <li class="nav-item" data-page="page-tests"><span>📝</span> Testlar</li>
+        <li class="nav-item" onclick="handleLogout()" style="margin-top:auto;"><span>🚪</span> Chiqish</li>
+    </ul>
+</aside>
+
+<main class="main">
+
+    <div id="page-stats" class="page active">
+        <h1>📊 Umumiy statistika</h1>
+        <div class="stat-grid" id="stat-grid">
+            <div class="empty-state">Yuklanmoqda...</div>
+        </div>
+        <div class="two-col">
+            <div class="card">
+                <h2 style="margin-bottom:1rem;font-size:1.05rem;">🏆 Top foydalanuvchilar</h2>
+                <table><thead><tr><th>Ism</th><th>Login</th><th>Ball</th></tr></thead><tbody id="top-users-body"></tbody></table>
+            </div>
+            <div class="card">
+                <h2 style="margin-bottom:1rem;font-size:1.05rem;">📉 Eng zaif mavzular (barcha foydalanuvchilar)</h2>
+                <table><thead><tr><th>Mavzu</th><th>To'g'ri</th><th>Foiz</th></tr></thead><tbody id="weak-topics-body"></tbody></table>
+            </div>
+        </div>
+        <div class="card" style="margin-top:1.5rem;">
+            <h2 style="margin-bottom:1rem;font-size:1.05rem;">🕓 So'nggi faoliyat</h2>
+            <div style="overflow-x:auto;">
+                <table><thead><tr><th>Foydalanuvchi</th><th>Test</th><th>Natija</th><th>Holat</th><th>Sana</th></tr></thead><tbody id="recent-activity-body"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-requests" class="page">
+        <h1>📥 Kutilayotgan so'rovlar</h1>
+        <div class="card">
+            <table>
+                <thead><tr><th>Ism</th><th>Login</th><th>Turi</th><th>Xabar</th><th>Sana</th><th>Amal</th></tr></thead>
+                <tbody id="requests-body"><tr><td colspan="6" class="empty-state">Yuklanmoqda...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="page-users" class="page">
+        <h1>👥 Barcha foydalanuvchilar</h1>
+        <div class="card">
+            <table>
+                <thead><tr><th>Ism</th><th>Login</th><th>Holat</th><th>Ball</th><th>O'rtacha %</th><th>Urinishlar</th><th>Amal</th></tr></thead>
+                <tbody id="users-body"><tr><td colspan="7" class="empty-state">Yuklanmoqda...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="page-tests" class="page">
+        <h1>📝 Testlar boshqaruvi</h1>
+        <div class="card" style="margin-bottom:1.5rem;">
+            <h2 style="margin-bottom:1rem;font-size:1.05rem;">➕ Yangi test yaratish</h2>
+            <div class="inline-fields">
+                <div class="field"><label class="form-label">Test nomi</label><input id="new-test-title" placeholder="Masalan: Trigonometriya asoslari"></div>
+                <div class="field"><label class="form-label">Vaqt (daqiqa)</label><input id="new-test-time" type="number" value="20"></div>
+            </div>
+            <div class="field"><label class="form-label">Tavsif</label><input id="new-test-desc" placeholder="Qisqa tavsif"></div>
+            <button class="btn btn-accent" onclick="createTest()">Test yaratish</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead><tr><th>Nomi</th><th>Savollar</th><th>Vaqt</th><th>Holat</th><th>Amal</th></tr></thead>
+                <tbody id="tests-body"><tr><td colspan="5" class="empty-state">Yuklanmoqda...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<div class="modal-overlay" id="user-modal">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeModal('user-modal')">✕</span>
+        <div id="user-modal-content"><p class="empty-state">Yuklanmoqda...</p></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="question-modal">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeModal('question-modal')">✕</span>
+        <h2 style="margin-bottom:1rem;">➕ Savol qo'shish</h2>
+        <input type="hidden" id="q-test-id">
+        <div class="field"><label class="form-label">Mavzu</label><input id="q-topic" placeholder="Masalan: Kasrlar"></div>
+        <div class="field"><label class="form-label">Savol matni</label><textarea id="q-text-input" rows="3"></textarea></div>
+        <div class="field"><label class="form-label">Formula (LaTeX, ixtiyoriy)</label><input id="q-math-input" placeholder="x^2 - 5x + 6 = 0"></div>
+        <div class="inline-fields">
+            <div class="field"><label class="form-label">Variant A</label><input id="opt-0"></div>
+            <div class="field"><label class="form-label">Variant B</label><input id="opt-1"></div>
+            <div class="field"><label class="form-label">Variant C</label><input id="opt-2"></div>
+            <div class="field"><label class="form-label">Variant D</label><input id="opt-3"></div>
+        </div>
+        <div class="field">
+            <label class="form-label">To'g'ri javob</label>
+            <select id="correct-index">
+                <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+            </select>
+        </div>
+        <button class="btn btn-accent" onclick="submitQuestion()">Saqlash</button>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    if (!getAdminToken()) window.location.href = '/index.html';
+    function handleLogout() { clearAuth(); window.location.href = '/index.html'; }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            item.classList.add('active');
+            document.getElementById(item.dataset.page).classList.add('active');
+        });
+    });
+
+    function pct(correct, total) { return total > 0 ? Math.round((correct / total) * 100) : 0; }
+    function badgeForPct(p) {
+        if (p >= 80) return `<span class="status-badge high">${p}%</span>`;
+        if (p >= 50) return `<span class="status-badge medium">${p}%</span>`;
+        return `<span class="status-badge low">${p}%</span>`;
+    }
+    function statusLabel(s) {
+        return { active: '<span class="status-badge high">Faol</span>', pending: '<span class="status-badge medium">Kutilmoqda</span>', blocked: '<span class="status-badge low">Bloklangan</span>' }[s] || s;
+    }
+
+    async function loadStats() {
+        try {
+            const d = await api('/api/admin/stats', { admin: true });
+            document.getElementById('stat-grid').innerHTML = `
+                <div class="stat-box"><h4>Jami foydalanuvchi</h4><p>${d.totals.total_users}</p></div>
+                <div class="stat-box"><h4>Faol</h4><p>${d.totals.active_users}</p></div>
+                <div class="stat-box"><h4>Kutilmoqda</h4><p>${d.totals.pending_users}</p></div>
+                <div class="stat-box"><h4>Bloklangan</h4><p>${d.totals.blocked_users}</p></div>
+                <div class="stat-box"><h4>Jami urinishlar</h4><p>${d.totals.total_attempts}</p></div>
+                <div class="stat-box"><h4>Bugungi urinishlar</h4><p>${d.attemptsToday}</p></div>
+                <div class="stat-box"><h4>O'rtacha natija</h4><p>${Math.round(d.avgScorePercent)}%</p></div>
+                <div class="stat-box"><h4>Faol testlar</h4><p>${d.totals.active_tests}</p></div>
+            `;
+            document.getElementById('top-users-body').innerHTML = d.topUsers.map(u =>
+                `<tr><td>${u.full_name}</td><td>${u.username}</td><td>${u.total_score}</td></tr>`
+            ).join('') || `<tr><td colspan="3" class="empty-state">Ma'lumot yo'q</td></tr>`;
+            document.getElementById('weak-topics-body').innerHTML = d.weakestTopicsOverall.map(w =>
+                `<tr><td>${w.topic}</td><td>${w.correct}/${w.total}</td><td>${badgeForPct(pct(w.correct, w.total))}</td></tr>`
+            ).join('') || `<tr><td colspan="3" class="empty-state">Ma'lumot yo'q</td></tr>`;
+            document.getElementById('recent-activity-body').innerHTML = d.recentActivity.map(a => `
+                <tr><td>${a.full_name} (${a.username})</td><td>${a.test_title}</td>
+                <td>${a.status === 'completed' ? a.score + '/' + (a.total_questions*5) : '—'}</td>
+                <td>${a.status === 'completed' ? 'Yakunlandi' : 'Jarayonda'}</td>
+                <td>${new Date(a.started_at).toLocaleDateString('uz-UZ')}</td></tr>
+            `).join('') || `<tr><td colspan="5" class="empty-state">Ma'lumot yo'q</td></tr>`;
+
+            const badge = document.getElementById('req-badge');
+            if (d.totals.pending_users > 0) { badge.style.display = 'inline-block'; badge.innerText = d.totals.pending_users; }
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadRequests() {
+        try {
+            const d = await api('/api/admin/requests?status=pending', { admin: true });
+            const body = document.getElementById('requests-body');
+            if (d.requests.length === 0) { body.innerHTML = `<tr><td colspan="6" class="empty-state">Kutilayotgan so'rovlar yo'q</td></tr>`; return; }
+            body.innerHTML = d.requests.map(r => `
+                <tr>
+                    <td>${r.full_name}</td><td>${r.username}</td>
+                    <td>${r.type === 'new_registration' ? "Yangi ro'yxat" : 'Blokdan chiqarish'}</td>
+                    <td>${r.message || '—'}</td>
+                    <td>${new Date(r.created_at).toLocaleDateString('uz-UZ')}</td>
+                    <td class="row-actions">
+                        <button class="btn btn-accent" onclick="reviewRequest(${r.id}, 'approve')">Tasdiqlash</button>
+                        <button class="btn btn-danger" onclick="reviewRequest(${r.id}, 'reject')">Rad etish</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function reviewRequest(requestId, action) {
+        try {
+            await api('/api/admin/requests', { method: 'POST', admin: true, body: { requestId, action } });
+            showToast(action === 'approve' ? 'Tasdiqlandi' : 'Rad etildi', 'success');
+            loadRequests(); loadStats(); loadUsers();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadUsers() {
+        try {
+            const d = await api('/api/admin/users', { admin: true });
+            const body = document.getElementById('users-body');
+            if (d.users.length === 0) { body.innerHTML = `<tr><td colspan="7" class="empty-state">Foydalanuvchi yo'q</td></tr>`; return; }
+            body.innerHTML = d.users.map(u => `
+                <tr>
+                    <td><a onclick="viewUser(${u.id})" style="color:var(--primary);cursor:pointer;font-weight:600;">${u.full_name}</a></td>
+                    <td>${u.username}</td>
+                    <td>${statusLabel(u.status)}</td>
+                    <td>${u.total_score}</td>
+                    <td>${Math.round(u.avg_percent)}%</td>
+                    <td>${u.attempts_count}</td>
+                    <td class="row-actions">
+                        ${u.status === 'blocked'
+                            ? `<button class="btn btn-accent" onclick="userAction(${u.id}, 'unblock')">Blokdan chiqarish</button>`
+                            : `<button class="btn btn-danger" onclick="userAction(${u.id}, 'block')">Bloklash</button>`}
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function userAction(userId, action) {
+        try {
+            await api('/api/admin/users', { method: 'POST', admin: true, body: { userId, action } });
+            showToast('Bajarildi', 'success');
+            loadUsers(); loadStats();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function viewUser(userId) {
+        openModal('user-modal');
+        const content = document.getElementById('user-modal-content');
+        content.innerHTML = `<p class="empty-state">Yuklanmoqda...</p>`;
+        try {
+            const d = await api(`/api/admin/user-detail?userId=${userId}`, { admin: true });
+            const timing = d.timing || {};
+            content.innerHTML = `
+                <h2>${d.user.fullName} <span style="color:var(--text-muted);font-weight:400;font-size:0.9rem;">(${d.user.username})</span></h2>
+                <p style="color:var(--text-muted);font-size:0.85rem;margin:0.4rem 0 1.2rem;">${statusLabel(d.user.status)} · Umumiy ball: <b>${d.user.totalScore}</b>${d.rank ? ` · Reyting: <b>${d.rank.rnk}</b> / ${d.rank.total_users}` : ''}</p>
+
+                <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.2rem;">
+                    <div class="stat-box"><h4>Javob berilgan savol</h4><p>${timing.answered_count || 0}</p></div>
+                    <div class="stat-box"><h4>To'g'ri javoblar</h4><p>${timing.correct_count || 0}</p></div>
+                    <div class="stat-box"><h4>O'rtacha vaqt/savol</h4><p>${timing.avg_time_seconds || 0}s</p></div>
+                </div>
+
+                <h3 style="font-size:0.95rem;margin-bottom:0.6rem;">📉 Zaif mavzular</h3>
+                <table style="margin-bottom:1.2rem;">
+                    <thead><tr><th>Mavzu</th><th>To'g'ri</th><th>Foiz</th></tr></thead>
+                    <tbody>${(d.weakTopics.length ? d.weakTopics : []).map(w =>
+                        `<tr><td>${w.topic}</td><td>${w.correct}/${w.total}</td><td>${badgeForPct(pct(w.correct, w.total))}</td></tr>`
+                    ).join('') || `<tr><td colspan="3" class="empty-state">Ma'lumot yo'q</td></tr>`}</tbody>
+                </table>
+
+                <h3 style="font-size:0.95rem;margin-bottom:0.6rem;">🗂 Test tarixi</h3>
+                <table>
+                    <thead><tr><th>Test</th><th>Natija</th><th>Holat</th><th>Sana</th></tr></thead>
+                    <tbody>${(d.attempts.length ? d.attempts : []).map(a =>
+                        `<tr><td>${a.test_title}</td><td>${a.status === 'completed' ? a.score + '/' + (a.total_questions*5) : '—'}</td><td>${a.status === 'completed' ? 'Yakunlandi' : 'Jarayonda'}</td><td>${new Date(a.started_at).toLocaleDateString('uz-UZ')}</td></tr>`
+                    ).join('') || `<tr><td colspan="4" class="empty-state">Hali test ishlanmagan</td></tr>`}</tbody>
+                </table>
+            `;
+        } catch (e) {
+            content.innerHTML = `<p class="empty-state">Xatolik: ${e.message}</p>`;
+        }
+    }
+
+    async function loadTests() {
+        try {
+            const d = await api('/api/admin/tests', { admin: true });
+            const body = document.getElementById('tests-body');
+            if (d.tests.length === 0) { body.innerHTML = `<tr><td colspan="5" class="empty-state">Test yo'q</td></tr>`; return; }
+            body.innerHTML = d.tests.map(t => `
+                <tr>
+                    <td>${t.title}</td><td>${t.question_count}</td><td>${t.time_limit_minutes} daq</td>
+                    <td>${t.is_active ? '<span class="status-badge high">Faol</span>' : '<span class="status-badge low">Nofaol</span>'}</td>
+                    <td class="row-actions">
+                        <button class="btn btn-muted" onclick="openQuestionModal(${t.id})">➕ Savol</button>
+                        <button class="btn btn-muted" onclick="toggleTestActive(${t.id})">${t.is_active ? 'Nofaollashtirish' : 'Faollashtirish'}</button>
+                        <button class="btn btn-danger" onclick="deleteTest(${t.id})">O'chirish</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function createTest() {
+        const title = document.getElementById('new-test-title').value.trim();
+        const timeLimitMinutes = Number(document.getElementById('new-test-time').value) || 20;
+        const description = document.getElementById('new-test-desc').value.trim();
+        if (!title) { showToast('Test nomini kiriting', 'error'); return; }
+        try {
+            await api('/api/admin/tests', { method: 'POST', admin: true, body: { action: 'create_test', title, timeLimitMinutes, description } });
+            showToast('Test yaratildi', 'success');
+            document.getElementById('new-test-title').value = '';
+            document.getElementById('new-test-desc').value = '';
+            loadTests();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function openQuestionModal(testId) {
+        document.getElementById('q-test-id').value = testId;
+        ['q-topic','q-text-input','q-math-input','opt-0','opt-1','opt-2','opt-3'].forEach(id => document.getElementById(id).value = '');
+        openModal('question-modal');
+    }
+
+    async function submitQuestion() {
+        const testId = Number(document.getElementById('q-test-id').value);
+        const topic = document.getElementById('q-topic').value.trim() || 'Umumiy';
+        const questionText = document.getElementById('q-text-input').value.trim();
+        const questionMath = document.getElementById('q-math-input').value.trim();
+        const options = [0,1,2,3].map(i => document.getElementById('opt-' + i).value.trim());
+        const correctIndex = Number(document.getElementById('correct-index').value);
+
+        if (!questionText || options.some(o => !o)) { showToast("Savol va barcha variantlarni to'ldiring", 'error'); return; }
+
+        try {
+            await api('/api/admin/tests', { method: 'POST', admin: true, body: { action: 'add_question', testId, topic, questionText, questionMath, options, correctIndex } });
+            showToast('Savol qo\'shildi', 'success');
+            closeModal('question-modal');
+            loadTests();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function toggleTestActive(testId) {
+        try { await api('/api/admin/tests', { method: 'POST', admin: true, body: { action: 'toggle_active', testId } }); loadTests(); }
+        catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteTest(testId) {
+        if (!confirm("Testni o'chirishga ishonchingiz komilmi? Barcha savollar va natijalar ham o'chadi.")) return;
+        try { await api('/api/admin/tests', { method: 'POST', admin: true, body: { action: 'delete_test', testId } }); showToast("O'chirildi", 'success'); loadTests(); loadStats(); }
+        catch (e) { showToast(e.message, 'error'); }
+    }
+
+    loadStats();
+    loadRequests();
+    loadUsers();
+    loadTests();
+</script>
+</body>
+</html>

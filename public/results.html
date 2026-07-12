@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathDash — Natijalarim</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+<style>
+    body { min-height: 100vh; padding: 2rem; }
+    .wrapper { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; }
+    .top-bar h1 { font-size: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="top-bar">
+        <h1>📊 Natijalarim</h1>
+        <button class="btn btn-muted" onclick="window.location.href='/dashboard.html'">← Bosh sahifa</button>
+    </div>
+    <div class="card">
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Sana</th><th>Test</th><th>Natija</th><th>Holat</th></tr></thead>
+                <tbody id="results-body"><tr><td colspan="4" class="empty-state">Yuklanmoqda...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+    if (!getToken()) window.location.href = '/index.html';
+
+    function statusBadge(pct, status) {
+        if (status !== 'completed') return `<span class="status-badge info">Jarayonda</span>`;
+        if (pct >= 80) return `<span class="status-badge high">A'lo</span>`;
+        if (pct >= 50) return `<span class="status-badge medium">O'rtacha</span>`;
+        return `<span class="status-badge low">Zaif</span>`;
+    }
+
+    async function load() {
+        try {
+            const data = await api('/api/user/results');
+            const body = document.getElementById('results-body');
+            if (data.results.length === 0) {
+                body.innerHTML = `<tr><td colspan="4" class="empty-state">Hali natija yo'q</td></tr>`;
+                return;
+            }
+            body.innerHTML = data.results.map(r => {
+                const pct = r.total_questions > 0 ? Math.round((r.score / (r.total_questions * 5)) * 100) : 0;
+                const date = new Date(r.started_at).toLocaleDateString('uz-UZ', { day: '2-digit', month: 'long', year: 'numeric' });
+                return `<tr><td>${date}</td><td>${r.test_title}</td><td>${r.score} / ${r.total_questions * 5}</td><td>${statusBadge(pct, r.status)}</td></tr>`;
+            }).join('');
+        } catch (e) {
+            showToast(e.message, 'error');
+        }
+    }
+    load();
+</script>
+</body>
+</html>
